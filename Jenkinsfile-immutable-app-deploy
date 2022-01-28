@@ -1,0 +1,62 @@
+pipeline {
+  agent any
+
+  options {
+    ansiColor('xterm')
+  }
+
+  parameters {
+    string(name: 'ENV', defaultValue: '', description: 'Which Environment?')
+    string(name: 'APP_VERSION', defaultValue: '', description: 'Which Version of APP?')
+    string(name: 'COMPONENT', defaultValue: '', description: 'Which APP Component?')
+  }
+
+  environment {
+    NEXUS = credentials("NEXUS")
+  }
+
+  stages {
+
+    stage('Labeling Build') {
+      steps {
+        script {
+          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "ENV = ${ENV}"
+          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "APP_VERSION = ${APP_VERSION}"
+          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "COMPONENT = ${COMPONENT}"
+        }
+      }
+    }
+
+    stage('Check Artifact') {
+      steps {
+        sh '''
+          curl -u admin:admin123 -X GET "http://172.31.10.164:8081/service/rest/v1/components?repository=${COMPONENT}" -H "accept: application/json" | jq ".items[].name" | grep ${APP_VERSION}
+        '''
+      }
+    }
+
+    stage('App Deployment') {
+      steps {
+        git branch: 'main', url: 'https://github.com/rayuduroyal/${COMPONENT}.git'
+        sh '''
+          cd terraform-immutable
+          export TF_VAR_APP_VERSION=${APP_VERSION}
+          export TF_VAR_NEXUS_USER=${NEXUS_USR}
+          export TF_VAR_NEXUS_PASS=${NEXUS_PSW}
+          make ${ENV}-apply
+        '''
+      }
+    }
+
+    stage('Instance Refresh') {
+      steps {
+        sh '''
+          export TF_VAR_APP_VERSION=${APP_VERSION}
+          aws autoscaling start-instance-refresh --auto-scaling-group-name ${COMPONENT}-${ENV} --preferences \'{"InstanceWarmup": 180, "MinHealthyPercentage": 90}\'
+        '''
+      }
+    }
+
+  }
+
+}

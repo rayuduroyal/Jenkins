@@ -1,0 +1,155 @@
+pipeline {
+  agent any
+
+  options {
+    ansiColor('xterm')
+  }
+
+  parameters {
+    string(name: 'ENV', defaultValue: '', description: 'Which Environment?')
+  }
+
+  stages {
+
+    stage('Repo Clone') {
+      steps {
+        dir('terraform') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/terraform-immutable.git'
+        }
+        dir('FRONTEND') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/frontend.git'
+        }
+        dir('CART') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/cart.git'
+        }
+        dir('CATALOGUE') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/catalogue.git'
+        }
+        dir('USER') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/user.git'
+        }
+        dir('SHIPPING') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/shipping.git'
+        }
+        dir('PAYMENT') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/payment.git'
+        }
+      }
+    }
+
+    stage('VPC') {
+      steps {
+        dir('terraform') {
+          sh '''
+            cd vpc
+            make ${ENV}-apply
+          '''
+        }
+      }
+    }
+
+    stage('DB & ALB') {
+      parallel {
+
+        stage('DB') {
+          steps {
+            dir('terraform') {
+              sh '''
+                cd db
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+        stage('ALB') {
+          steps {
+            dir('terraform') {
+              sh '''
+                cd alb
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+      }
+
+    }
+
+    stage('APP COMPONENTS') {
+      parallel {
+
+        stage('CART') {
+          steps {
+            dir('CART') {
+              sh '''
+                cd terraform-immutable
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+        stage('CATALOGUE') {
+          steps {
+            dir('CATALOGUE') {
+              sh '''
+                cd terraform-immutable
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+        stage('USER') {
+          steps {
+            dir('USER') {
+              sh '''
+                cd terraform-immutable
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+        stage('SHIPPING') {
+          steps {
+            dir('SHIPPING') {
+              sh '''
+                cd terraform-immutable
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+        stage('PAYMENT') {
+          steps {
+            dir('PAYMENT') {
+              sh '''
+                cd terraform-immutable
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+        stage('FRONTEND') {
+          steps {
+            dir('FRONTEND') {
+              sh '''
+                cd terraform-immutable
+                make ${ENV}-apply
+              '''
+            }
+          }
+        }
+
+      }
+
+    }
+
+  }
+
+}
