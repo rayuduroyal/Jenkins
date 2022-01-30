@@ -40,8 +40,9 @@ pipeline {
           git branch: 'main', url: 'https://github.com/rayuduroyal/Kubernetes.git'
         }
         dir('helm') {
-          sh 'ls -l'
-          sh 'ls -l ..'
+          sh '''
+            helm upgrade -i ${COMPONENT} roboshop -f ../app/helm/${ENV}-values.yml -n ${ENV}
+          '''
         }
       }
     }
