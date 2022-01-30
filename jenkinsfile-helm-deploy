@@ -26,7 +26,7 @@ pipeline {
     stage('Check Artifact') {
       steps {
         sh '''
-          echo Hello
+         aws ecr list-images --repository-name ${COMPONENT} | jq ".imageIds[].imageTag" | grep ${APP_VERSION}
         '''
       }
     }
@@ -41,7 +41,7 @@ pipeline {
         }
         dir('helm') {
           sh '''
-            helm upgrade -i ${COMPONENT}-${ENV} roboshop -f ../app/helm/${ENV}-values.yml
+            helm upgrade -i ${COMPONENT} roboshop -f ../app/helm/${ENV}-values.yml --set image.tag=${APP_VERSION} --wait --timeout 1m -n ${ENV}
           '''
         }
       }
