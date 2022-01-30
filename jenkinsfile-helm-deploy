@@ -41,7 +41,7 @@ pipeline {
         }
         dir('helm') {
           sh '''
-            helm upgrade -i ${COMPONENT} roboshop -f ../app/helm/${ENV}-values.yml -n ${ENV}
+            helm upgrade -i ${COMPONENT}-${ENV} roboshop -f ../app/helm/${ENV}-values.yml
           '''
         }
       }
