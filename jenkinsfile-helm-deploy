@@ -1,0 +1,51 @@
+pipeline {
+  agent any
+
+  options {
+    ansiColor('xterm')
+  }
+
+  parameters {
+    string(name: 'ENV', defaultValue: '', description: 'Which Environment?')
+    string(name: 'APP_VERSION', defaultValue: '', description: 'Which Version of APP?')
+    string(name: 'COMPONENT', defaultValue: '', description: 'Which APP Component?')
+  }
+
+  stages {
+
+    stage('Labeling Build') {
+      steps {
+        script {
+          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "ENV = ${ENV}"
+          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "APP_VERSION = ${APP_VERSION}"
+          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "COMPONENT = ${COMPONENT}"
+        }
+      }
+    }
+
+    stage('Check Artifact') {
+      steps {
+        sh '''
+          echo Hello
+        '''
+      }
+    }
+
+    stage('App Deployment') {
+      steps {
+        dir('app') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/${COMPONENT}.git'
+        }
+        dir('helm') {
+          git branch: 'main', url: 'https://github.com/rayuduroyal/${COMPONENT}.git'
+        }
+        dir('helm') {
+          sh 'ls -l'
+          sh 'ls -l ..'
+        }
+      }
+    }
+
+  }
+
+}
