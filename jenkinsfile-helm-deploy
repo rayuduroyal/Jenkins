@@ -37,7 +37,7 @@ pipeline {
           git branch: 'main', url: 'https://github.com/rayuduroyal/${COMPONENT}.git'
         }
         dir('helm') {
-          git branch: 'main', url: 'https://github.com/rayuduroyal/${COMPONENT}.git'
+          git branch: 'main', url: 'https://github.com/rayuduroyal/Kubernetes.git'
         }
         dir('helm') {
           sh 'ls -l'
