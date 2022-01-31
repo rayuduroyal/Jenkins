@@ -5,45 +5,28 @@ pipeline {
     ansiColor('xterm')
   }
 
-  parameters {
-    string(name: 'ENV', defaultValue: '', description: 'Which Environment?')
-    string(name: 'APP_VERSION', defaultValue: '', description: 'Which Version of APP?')
-    string(name: 'COMPONENT', defaultValue: '', description: 'Which APP Component?')
-  }
-
   stages {
 
-    stage('Labeling Build') {
-      steps {
-        script {
-          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "ENV = ${ENV}"
-          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "APP_VERSION = ${APP_VERSION}"
-          addShortText background: 'yellow', color: 'black', borderColor: 'yellow', text: "COMPONENT = ${COMPONENT}"
-        }
-      }
-    }
 
-    stage('Check Artifact') {
+    stage('DB Deployment') {
       steps {
         sh '''
-         aws ecr list-images --repository-name ${COMPONENT} | jq ".imageIds[].imageTag" | grep ${APP_VERSION}
-        '''
-      }
-    }
+          kubectl create ns prod || true
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add stable https://charts.helm.sh/stable
+          helm repo update
+          helm install mongo bitnami/mongodb --set auth.enabled=false -n dev
+          helm install redis bitnami/redis --set auth.enabled=false -n dev
+          helm install rabbitmq bitnami/rabbitmq -n dev
+          helm install mysql stable/mysql --set mysqlRootPassword=password -n dev
 
-    stage('App Deployment') {
-      steps {
-        dir('app') {
-          git branch: 'main', url: 'https://github.com/rayuduroyal/${COMPONENT}.git'
-        }
-        dir('helm') {
-          git branch: 'main', url: 'https://github.com/rayuduroyal/Kubernetes.git'
-        }
-        dir('helm') {
-          sh '''
-            helm upgrade -i ${COMPONENT} roboshop -f ../app/helm/${ENV}-values.yml --set image.tag=${APP_VERSION} --wait --timeout 1m -n ${ENV}
-          '''
-        }
+          #helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          #helm repo add bitnami https://charts.bitnami.com/bitnami
+          #helm repo update
+          #helm install pmstack prometheus-community/kube-prometheus-stack
+          #helm install ingress bitnami/nginx-ingress-controller
+          #kubectl apply -f ingress.yml
+        '''
       }
     }
 
