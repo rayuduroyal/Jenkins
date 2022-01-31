@@ -11,6 +11,7 @@ pipeline {
     string(name: 'COMPONENT', defaultValue: '', description: 'Which APP Component?')
   }
 
+
   stages {
 
     stage('Labeling Build') {
@@ -24,20 +25,30 @@ pipeline {
     }
 
     stage('Check Artifact') {
+      when {
+        expression {
+          return env.APP_VERSION != ''
+        }
+      }
       steps {
         sh '''
-         aws ecr list-images --repository-name ${COMPONENT} | jq ".imageIds[].imageTag" | grep ${APP_VERSION}
+          aws ecr list-images --repository-name ${COMPONENT} | jq ".imageIds[].imageTag" | grep ${APP_VERSION}
         '''
       }
     }
 
-    stage('App Deployment') {
+    stage('App Deployment-Version') {
+      when {
+        expression {
+          return env.APP_VERSION != ''
+        }
+      }
       steps {
         dir('app') {
-          git branch: 'main', url: 'https://github.com/rayuduroyal/${COMPONENT}.git'
+          git branch: 'main', url: "https://github.com/rayuduroyal/${COMPONENT}.git"
         }
         dir('helm') {
-          git branch: 'main', url: 'https://github.com/rayuduroyal/Kubernetes.git'
+          git branch: 'main', url: "'https://github.com/rayuduroyal/Kubernetes.git"
         }
         dir('helm') {
           sh '''
@@ -46,6 +57,29 @@ pipeline {
         }
       }
     }
+
+    stage('App Deployment-Latest') {
+      when {
+        expression {
+          return env.APP_VERSION == ''
+        }
+      }
+      steps {
+        dir('app') {
+          git branch: 'main', url: "https://github.com/rayuduroyal/${COMPONENT}.git"
+        }
+        dir('helm') {
+          git branch: 'main', url: "'https://github.com/rayuduroyal/Kubernetes.git"
+        }
+        dir('helm') {
+          sh '''
+            helm upgrade -i ${COMPONENT} roboshop -f ../app/helm/${ENV}-values.yml --set image.tag=latest --wait --timeout 5m -n ${ENV}
+          '''
+        }
+      }
+    }
+
+
 
   }
 
