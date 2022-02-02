@@ -15,10 +15,10 @@ pipeline {
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm repo add stable https://charts.helm.sh/stable
           helm repo update
-          helm install mongo bitnami/mongodb --set auth.enabled=false -n dev
-          helm install redis bitnami/redis --set auth.enabled=false -n dev
-          helm install rabbitmq bitnami/rabbitmq -n dev
-          helm install mysql stable/mysql --set mysqlRootPassword=password -n dev
+          helm install mongo bitnami/mongodb --set auth.enabled=false -n prod
+          helm install redis bitnami/redis --set auth.enabled=false -n prod
+          helm install rabbitmq bitnami/rabbitmq -n prod
+          helm install mysql stable/mysql --set mysqlRootPassword=password -n prod
 
           #helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           #helm repo add bitnami https://charts.bitnami.com/bitnami
