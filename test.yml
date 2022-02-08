@@ -1,0 +1,22 @@
+stages:
+  - stage: CompileCode
+    jobs:
+      - job: CompileCode
+        steps:
+        - script: echo Compile Code - ${COMPONENT}
+          name: CompileCode
+
+  - stage: TestCases
+    #condition: in(dependencies.CompileCode.result, 'Succeeded')
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
+    jobs:
+      - job: TestCases
+        steps:
+        - script: echo Test Cases
+          name: TestCases
+      - job: TestCases1
+        dependsOn:
+          - TestCases
+        steps:
+        - script: echo Test Cases
+          name: TestCases

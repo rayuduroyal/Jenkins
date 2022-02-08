@@ -7,6 +7,8 @@ pipeline {
 
   parameters {
     string(name: 'ENV', defaultValue: '', description: 'Which Environment?')
+    string(name: 'APP_VERSION', defaultValue: '', description: 'Which Version of APP?')
+    string(name: 'COMPONENT', defaultValue: '', description: 'Which APP Component?')
   }
 
   stages {
